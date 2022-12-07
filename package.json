@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "an-array-of-french-words": "^2.0.0",
+    "discord.js": "^14.7.1",
+    "dotenv": "^16.0.3"
+  }
+}
