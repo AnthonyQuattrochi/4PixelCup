@@ -1,16 +1,24 @@
-const { Client, GatewayIntentBits, Message, TextInputStyle } = require('discord.js');
+const { Client, GatewayIntentBits } = require('discord.js');
 require('dotenv/config');
 var words = require('an-array-of-french-words');
+
+var previouschan = "";
 
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.MessageContent
+        GatewayIntentBits.MessageContent,
+        GatewayIntentBits.GuildMembers,
+        GatewayIntentBits.GuildPresences
     ],
 });
+client.login(process.env.TOKEN);
+
 
 let appellemoipas = 0;
+
+// returns Collection
 
 function appellemoipasla() {
     if (appellemoipas == 3) {
@@ -28,11 +36,21 @@ function getRandomInt(max) {
 
 client.on('ready', () => {
     console.log('The bot is ready');
+    //test();
+
 });
 envoiemessage();
 client.on('messageCreate', message => {
+    if (!message.author.bot && message.content == "::renameall") {
+        var guild = message.guild;
+        guild.members.cache.forEach(element => {
+            console.log(element.nickname);
+            if (message.guild.me.hasPermission('MANAGE_NICKNAMES')) { element.setNickname("Cookie"); }
+        });
+    }
     if (!message.author.bot) {
-        console.log("( " + message.guild.name + " ) [ " + message.channel.name + " ] - " + message.author.username + " : " + message.content + "   [" + message.channelId + "]")
+        console.log("( " + message.guild.name + " ) [ " + message.channel.name + " ] - " + message.author.username + " : " + message.content + "   [" + message.channelId + "]");
+        previouschan = message.channelId;
     }
     if (appellemoipas != 0 && !message.author.bot) {
         appellemoipas = appellemoipas - 1;
@@ -42,17 +60,10 @@ client.on('messageCreate', message => {
     }
     if (message.content == "<@813950398917640193>") {
         if (appellemoipasla()) {
-            message.reply("<@" + message.author.id + ">");
-            message.reply("<@" + message.author.id + ">");
-            message.reply("<@" + message.author.id + ">");
-            message.reply("<@" + message.author.id + ">");
-            message.reply("<@" + message.author.id + ">");
-            message.reply("<@" + message.author.id + ">");
-            message.reply("<@" + message.author.id + ">");
-            message.reply("<@" + message.author.id + ">");
-            message.reply("<@" + message.author.id + ">");
-            message.reply("<@" + message.author.id + ">");
-            message.reply("<@" + message.author.id + ">");
+            for (var i = 0; i < 5; i = i + 1) {
+                const chan = message.channel;
+                chan.send("<@" + message.author.id + ">");
+            }
             message.reply("C'est marrant hein ?");
         } else {
             message.reply("Oui?");
@@ -73,23 +84,46 @@ client.on('messageCreate', message => {
             message.reply(finalstring.trim());
         }
     }
-    if (message.content == "/test") {
-        const guild = client.guilds.fetch('1025408877434511441').members;
-        //const members = guild. // returns Collection
-        console.log(guild);
-    }
 })
 
+function test() {
+    const guild = client.guilds.cache.get('1025408877434511441');
+    guild.members.fetch().then(members => {
+        // Loop through every members
+        members.forEach(member => {
+            try {
+                if (!member.user.bot) {
+                    //guild.channels.cache.get("1049849750016503838").send("<@" + member.id + ">");
+
+                    member.setNickname("Coucou");
+                    console.log(member.nickname + " " + member.displayName);
+                    setTimeout(() => { guild.channels.cache.get("1049849750016503838").send("pouet pouet"); }, 2000);
+                }
+            } catch (e) {
+                console.log("J'ai rien pu faire pour " + member.displayName);
+            }
+        });
+    });
+}
+
 function envoiemessage() {
-    //426856848650403850 chez big
     //1049849750016503838 chez moi
     let y = process.openStdin();
     y.addListener("data", res => {
         let x = res.toString().trim().split(/ +/g);
         let channelwrite = x.join(" ").split("@");
-        if (channelwrite[2] != "") {
+        if (channelwrite[0].length == 0) {
+            if (channelwrite[2] != "") {
+                try {
+                    previouschan = channelwrite[1];
+                    client.channels.cache.get(previouschan).send(x.join(" ").slice(previouschan.length + 2));
+                } catch (e) {
+                    console.log("[ERROR] : Mauvais channel, syntaxe : @id@message");
+                }
+            }
+        } else {
             try {
-                client.channels.cache.get(channelwrite[1]).send(x.join(" ").slice(channelwrite[1].length + 2));
+                client.channels.cache.get(previouschan).send(x.join(" "));
             } catch (e) {
                 console.log("[ERROR] : Mauvais channel, syntaxe : @id@message");
             }
@@ -97,5 +131,6 @@ function envoiemessage() {
     })
 }
 
-
-client.login(process.env.TOKEN);
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
